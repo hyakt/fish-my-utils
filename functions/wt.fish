@@ -114,8 +114,47 @@ function wt --description "Git worktree manager with fzf interface"
         set -l branch_name $argv[1]
 
         if test -z "$branch_name"
-            echo "Usage: wt add [-z|--zed] <branch_name>"
+            echo "Usage: wt add [-z|--zed] <branch_name|.>"
+            echo "  Use '.' to stash changes and create worktree from current branch"
             return 1
+        end
+
+        # If branch_name is ".", stash changes and create worktree with same branch
+        if test "$branch_name" = "."
+            set -l current_branch (git branch --show-current)
+            if test -z "$current_branch"
+                echo "Failed to get current branch name"
+                return 1
+            end
+
+            # Check if there are any changes to stash
+            set -l stash_message ""
+            if not git diff-index --quiet HEAD 2>/dev/null
+                echo "📦 Stashing current changes..."
+                set stash_message "wt-auto-stash-"(date +"%Y%m%d_%H%M%S")
+                git stash push -u -m "$stash_message"
+
+                if test $status -ne 0
+                    echo "Failed to stash changes"
+                    return 1
+                end
+
+                echo "✅ Changes stashed"
+            else
+                echo "No changes to stash"
+            end
+
+            # Detach HEAD to release the branch for new worktree
+            echo "🔓 Detaching HEAD to release branch..."
+            git checkout --detach
+
+            if test $status -ne 0
+                echo "Failed to detach HEAD"
+                return 1
+            end
+
+            set branch_name "$current_branch"
+            echo "Creating worktree with branch: $branch_name"
         end
 
         # Get git directory
@@ -156,6 +195,17 @@ function wt --description "Git worktree manager with fzf interface"
             set -l project_root (git rev-parse --show-toplevel)
 
             cd "$worktree_path"
+
+            # Pop stash to restore changes in new worktree
+            if test -n "$stash_message"
+                echo "📦 Restoring stashed changes..."
+                git stash pop
+                if test $status -eq 0
+                    echo "✅ Changes restored in new worktree"
+                else
+                    echo "⚠️  Failed to pop stash, but you can manually apply it with 'git stash apply'"
+                end
+            end
 
             # Auto install dependencies if package.json exists
             __wt_install_dependencies
@@ -247,10 +297,10 @@ end
     else
         echo "Unknown command: $cmd"
         echo "Usage:"
-        echo "  wt [-z|--zed]              - Show worktree list with fzf"
-        echo "  wt add [-z|--zed] <branch> - Create new branch and worktree"
-        echo "  wt remove <branch>         - Remove worktree and branch"
-        echo "  wt init                    - Create .wt_hook.fish template"
+        echo "  wt [-z|--zed]                - Show worktree list with fzf"
+        echo "  wt add [-z|--zed] <branch|.> - Create new branch and worktree (use '.' to stash and create from current branch)"
+        echo "  wt remove <branch>           - Remove worktree and branch"
+        echo "  wt init                      - Create .wt_hook.fish template"
         return 1
     end
 end
