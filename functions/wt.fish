@@ -47,7 +47,7 @@ end
 
 function wt --description "Git worktree manager with fzf interface"
     # Parse options for the main command
-    argparse -n wt 'z/zed' -- $argv
+    argparse -n wt 'q/quiet' -- $argv
     or return
 
     set -l cmd $argv[1]
@@ -99,8 +99,8 @@ function wt --description "Git worktree manager with fzf interface"
         if test -n "$selected"
             cd $selected
 
-            # Open in Zed if --zed flag is provided
-            if set -q _flag_zed
+            # Open in Zed by default unless --quiet flag is provided
+            if not set -q _flag_quiet
                 echo "Opening in Zed..."
                 zed $selected
             end
@@ -108,13 +108,13 @@ function wt --description "Git worktree manager with fzf interface"
 
     else if test "$cmd" = "add"
         # Parse options
-        argparse -n wt 'z/zed' -- $argv[2..]
+        argparse -n wt 'q/quiet' -- $argv[2..]
         or return
 
         set -l branch_name $argv[1]
 
         if test -z "$branch_name"
-            echo "Usage: wt add [-z|--zed] <branch_name|.>"
+            echo "Usage: wt add [-q|--quiet] <branch_name|.>"
             echo "  Use '.' to stash changes and create worktree from current branch"
             return 1
         end
@@ -222,8 +222,8 @@ function wt --description "Git worktree manager with fzf interface"
                 set -e WT_PROJECT_ROOT
             end
 
-            # Open in Zed if --zed flag is provided
-            if set -q _flag_zed
+            # Open in Zed by default unless --quiet flag is provided
+            if not set -q _flag_quiet
                 echo "Opening in Zed..."
                 zed "$worktree_path"
             end
@@ -297,8 +297,8 @@ end
     else
         echo "Unknown command: $cmd"
         echo "Usage:"
-        echo "  wt [-z|--zed]                - Show worktree list with fzf"
-        echo "  wt add [-z|--zed] <branch|.> - Create new branch and worktree (use '.' to stash and create from current branch)"
+        echo "  wt [-q|--quiet]              - Show worktree list with fzf (opens in Zed by default)"
+        echo "  wt add [-q|--quiet] <branch|.> - Create new branch and worktree (use '.' to stash and create from current branch, opens in Zed by default)"
         echo "  wt remove <branch>           - Remove worktree and branch"
         echo "  wt init                      - Create .wt_hook.fish template"
         return 1
