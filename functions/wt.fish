@@ -76,8 +76,17 @@ function wt --description "Git worktree manager with fzf interface"
         set -l dir_name "$timestamp"_"$branch_name"
         set -l worktree_path "$tmp_worktrees_dir/$dir_name"
 
-        # Create new branch and worktree
-        git worktree add -b "$branch_name" "$worktree_path"
+        # Check if branch already exists
+        set -l branch_exists (git branch --list "$branch_name")
+
+        # Create worktree (with or without creating new branch)
+        if test -n "$branch_exists"
+            # Branch exists, create worktree from existing branch
+            git worktree add "$worktree_path" "$branch_name"
+        else
+            # Branch doesn't exist, create new branch and worktree
+            git worktree add -b "$branch_name" "$worktree_path"
+        end
 
         if test $status -eq 0
             echo "Created worktree at: $worktree_path"
