@@ -1,5 +1,55 @@
 # ref: https://hiroppy.me/blog/posts/git-worktree-fish
+
+# Helper function to install dependencies based on lock files
+function __wt_install_dependencies --description "Auto install dependencies"
+    # Check for Rust project first
+    if test -f "Cargo.toml"
+        echo "📦 Found Cargo.toml, building project..."
+        echo "Using package manager: cargo"
+        cargo build
+        return
+    end
+
+    # Check for Deno project
+    if test -f "deno.json"; or test -f "deno.jsonc"
+        if test -f "deno.lock"
+            echo "📦 Found deno.json, installing dependencies..."
+            echo "Using package manager: deno"
+            deno install
+            return
+        end
+    end
+
+    # Check for Node.js project
+    if test -f "package.json"
+        echo "📦 Found package.json, installing dependencies..."
+
+        # Detect package manager from lock files
+        if test -f "pnpm-lock.yaml"
+            echo "Using package manager: pnpm"
+            pnpm install
+        else if test -f "yarn.lock"
+            echo "Using package manager: yarn"
+            yarn install
+        else if test -f "bun.lockb"
+            echo "Using package manager: bun"
+            bun install
+        else if test -f "package-lock.json"
+            echo "Using package manager: npm"
+            npm install
+        else
+            echo "No lock file found, using npm as default"
+            npm install
+        end
+        return
+    end
+end
+
 function wt --description "Git worktree manager with fzf interface"
+    # Parse options for the main command
+    argparse -n wt 'z/zed' -- $argv
+    or return
+
     set -l cmd $argv[1]
 
     if test -z "$cmd"
@@ -41,20 +91,30 @@ function wt --description "Git worktree manager with fzf interface"
             ' \
             --header="🌲 Git Worktree Manager | Press Enter to navigate" \
             --border \
-            --height=80% \
+            --height=100% \
             --layout=reverse \
             --prompt="🔍 " | awk '{print $1}'
         )
 
         if test -n "$selected"
             cd $selected
+
+            # Open in Zed if --zed flag is provided
+            if set -q _flag_zed
+                echo "Opening in Zed..."
+                zed $selected
+            end
         end
 
     else if test "$cmd" = "add"
-        set -l branch_name $argv[2]
+        # Parse options
+        argparse -n wt 'z/zed' -- $argv[2..]
+        or return
+
+        set -l branch_name $argv[1]
 
         if test -z "$branch_name"
-            echo "Usage: wt add <branch_name>"
+            echo "Usage: wt add [-z|--zed] <branch_name>"
             return 1
         end
 
@@ -97,6 +157,9 @@ function wt --description "Git worktree manager with fzf interface"
 
             cd "$worktree_path"
 
+            # Auto install dependencies if package.json exists
+            __wt_install_dependencies
+
             # Execute .wt_hook.fish if it exists in the project root
             if test -f "$project_root/.wt_hook.fish"
                 echo "Executing .wt_hook.fish..."
@@ -107,6 +170,12 @@ function wt --description "Git worktree manager with fzf interface"
                 set -e WT_WORKTREE_PATH
                 set -e WT_BRANCH_NAME
                 set -e WT_PROJECT_ROOT
+            end
+
+            # Open in Zed if --zed flag is provided
+            if set -q _flag_zed
+                echo "Opening in Zed..."
+                zed "$worktree_path"
             end
         end
 
@@ -178,10 +247,10 @@ end
     else
         echo "Unknown command: $cmd"
         echo "Usage:"
-        echo "  wt              - Show worktree list with fzf"
-        echo "  wt add <branch> - Create new branch and worktree"
-        echo "  wt remove <branch> - Remove worktree and branch"
-        echo "  wt init         - Create .wt_hook.fish template"
+        echo "  wt [-z|--zed]              - Show worktree list with fzf"
+        echo "  wt add [-z|--zed] <branch> - Create new branch and worktree"
+        echo "  wt remove <branch>         - Remove worktree and branch"
+        echo "  wt init                    - Create .wt_hook.fish template"
         return 1
     end
 end
