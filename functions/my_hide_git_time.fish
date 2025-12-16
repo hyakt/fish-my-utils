@@ -1,4 +1,4 @@
-function my_hide_git_time
+function my_hide_git_time --description "Hide git commit timestamps by setting them to midnight"
     set -l first_commit (git rev-list HEAD | tail -n 1)"~"
     set -l last_commit "HEAD"
     git filter-branch --env-filter '

@@ -1,5 +1,5 @@
 # ref: https://hiroppy.me/blog/posts/git-worktree-fish
-function wt
+function wt --description "Git worktree manager with fzf interface"
     set -l cmd $argv[1]
 
     if test -z "$cmd"
