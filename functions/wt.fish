@@ -5,7 +5,7 @@ function wt --description "Git worktree manager with fzf interface"
     if test -z "$cmd"
         # Show worktree list with fzf
         set -l selected (git worktree list | fzf \
-            --preview-window="right:70%:wrap" \
+            --preview-window="right:60%:wrap" \
             --preview='
                 worktree_path=$(echo {} | awk "{print \$1}")
                 branch=$(echo {} | sed "s/.*\[//" | sed "s/\]//")
