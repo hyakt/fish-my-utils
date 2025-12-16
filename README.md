@@ -1,13 +1,13 @@
-# fish-fzf
+# fish-my-utils
 
-fzf plugins in fish
+my utils plugin in fish
 
 ## Install
 
 [fisherman](https://github.com/fisherman/fisherman)
 
 ```
-fisher hyakt/fish-fzf
+fisher hyakt/fish-my-utils
 ```
 
 ## Usage
