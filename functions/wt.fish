@@ -1,7 +1,7 @@
 # ref: https://hiroppy.me/blog/posts/git-worktree-fish
 
 # Helper function to install dependencies based on lock files
-function __wt_install_dependencies --description "Auto install dependencies"
+function __wt-install-dependencies --description "Auto install dependencies"
     # Check for Rust project first
     if test -f "Cargo.toml"
         echo "📦 Found Cargo.toml, building project..."
@@ -208,7 +208,7 @@ function wt --description "Git worktree manager with fzf interface"
             end
 
             # Auto install dependencies if package.json exists
-            __wt_install_dependencies
+            __wt-install-dependencies
 
             # Execute .wt_hook.fish if it exists in the project root
             if test -f "$project_root/.wt_hook.fish"

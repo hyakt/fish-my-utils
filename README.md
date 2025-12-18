@@ -17,6 +17,6 @@ If you'd like to bind Ctrl-R
 
 ```fish
 function fish_user_key_bindings
-   bind \cr fzf_history
+   bind \cr my-history
 end
 ```

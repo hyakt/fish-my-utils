@@ -1,4 +1,4 @@
-function my_copy_pr --description "Copy a pull request to a new base branch"
+function my-copy-pr --description "Copy a pull request to a new base branch"
 	set -l base_branch $argv[1]
 	set -l pr_number $argv[2]
 
